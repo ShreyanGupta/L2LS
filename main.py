@@ -21,7 +21,7 @@ def main():
   x = torch.autograd.Variable(torch.Tensor(np.zeros((1, 3, 250, 250))))
   y = torch.autograd.Variable(torch.Tensor(np.zeros((1, 3, 250, 250))))
   
-  model = StereoCNN(7)
+  model = StereoCNN(7, k)
   loss_fn = nn.L1Loss()
   optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
 
