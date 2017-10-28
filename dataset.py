@@ -31,20 +31,18 @@ class KittyDataset(Dataset):
     left_img = m.imread(left_img_path)
     left_img = np.array(left_img, dtype=np.float32)
     left_img = left_img.transpose(2,0,1)
-    left_img = (left_img - left_img.mean())/left_img.std()
-    # print "left", left_img.mean(), left_img.std()
 
     right_img = m.imread(right_img_path)
     right_img = np.array(right_img,dtype=np.float32)
     right_img = right_img.transpose(2,0,1)
+    
+    # Normalizing images
+    left_img = (left_img - left_img.mean())/left_img.std()
     right_img = (right_img - right_img.mean())/right_img.std()
-    # print "right", right_img.mean(), right_img.std()
 
-
-    # TODO(AA) : Figure out the right representation of imread
-    # TODO(AA) : Normalize the input as per paper
     lbl = m.imread(lbl_path)
     lbl = np.array(lbl, dtype=np.int64)
+    lbl = lbl/256
 
     if self._transform:
       left_img, right_img, lbl = self.transform(img, lbl)
