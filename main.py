@@ -1,3 +1,4 @@
+import argparse
 import torch
 import torch.nn as nn
 import numpy as np
@@ -7,34 +8,42 @@ from torch.autograd import Variable
 from dataset import KittyDataset
 from stereocnn import StereoCNN
 
-# TODO(AA) : CUDA compatible? / Can we implement correlation in C++/GPU (faster)?
-#            Custom C++ implementation
-# TODO(??) : Add a profiler
-# TOGO(??) : Complete the CRF wala part
+parser = argparse.ArgumentParser(description='StereoCNN model')
+parser.add_argument('-k', "--disparity", type=int, default=256)
+parser.add_argument('-ul', "--unary-layers", type=int, default=7)
+
+parser.add_argument('-lr', "--learning-rate", type=float, default=1e-2)
+parser.add_argument('-m', "--momentum", type=float, default=0.1)
+parser.add_argument('-b', "--batch-size", type=int, default=1)
+parser.add_argument('-n', "--num-epoch", type=int, default=100)
+args = parser.parse_args()
 
 # Global variables
-k = 256
-learning_rate = 1e-3
-momentum = 0.1
+k = args.disparity
+unary_layers = args.unary_layers
 
-batch_size = 1
+learning_rate = args.learning_rate
+momentum = args.momentum
+batch_size = args.batch_size
+num_epoch = args.num_epoch
 num_workers = 4
+
 # DATA_DIR = '/Users/ankitanand/Desktop/Stereo_CRF_CNN/Datasets/Kitty/data_scene_flow'
-# DATA_DIR = '/Users/Shreyan/Downloads/Datasets/Kitty/data_scene_flow'
-DATA_DIR = '/home/ankit/Stereo_CNN_CRF/L2LS/Datasets/Kitty/data_scene_flow'
+DATA_DIR = '/Users/Shreyan/Downloads/Datasets/Kitty/data_scene_flow'
+# DATA_DIR = '/home/ankit/Stereo_CNN_CRF/Datasets/Kitty/data_scene_flow'
 
 def main():
   train_set = KittyDataset(DATA_DIR)
   train_loader = DataLoader(train_set, batch_size=batch_size, num_workers=num_workers, shuffle=True)
   
-  model = StereoCNN(1, k)
+  model = StereoCNN(unary_layers, k)
   loss_fn = nn.CrossEntropyLoss()
   optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
 
   if torch.cuda.is_available():
     model = model.cuda()
 
-  for epoch in range(100):
+  for epoch in range(num_epoch):
     print("epoch", epoch)
     for i, data in enumerate(train_loader):
       left_img, right_img, labels = data
@@ -51,6 +60,7 @@ def main():
       labels = Variable(labels)
 
       y_pred = model(left_img, right_img)
+      _, y_labels = torch.max(y_pred, dim=1)
       y_pred = y_pred.permute(0,2,3,1)
       y_pred = y_pred.contiguous()
       
@@ -59,7 +69,6 @@ def main():
       loss.backward()
       optimizer.step()
       print("loss", i, loss.data[0])
-      break
 
 if __name__ == "__main__":
   main()

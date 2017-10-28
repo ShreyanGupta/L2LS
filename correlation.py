@@ -20,8 +20,9 @@ class Correlation(autograd.Function):
   def forward(self, left, right):
     """ Receive input tensor, return output tensor"""
     self.save_for_backward(left, right)
+    self.type = left.type()
     b,d,r,c = left.size()
-    pad = torch.zeros(b,d,r,self.k)
+    pad = torch.zeros(b,d,r,self.k).type(self.type)
     right = torch.cat((right, pad), dim=3)
     corr_vec = [(left * right[:, :, :, i:i+c]).sum(dim=1) for i in range(self.k)]
     return torch.stack(corr_vec, dim=1)
@@ -30,10 +31,11 @@ class Correlation(autograd.Function):
     """Calculate the gradients of left and right"""
     left, right = self.saved_tensors
     b,d,r,c = left.size()
-    right = torch.cat((right, torch.zeros(b,d,r,self.k)), dim=3)
-    left = torch.cat((torch.zeros(b,d,r,self.k), left), dim=3)
-    l_grad = torch.zeros(b,d,r,c)
-    r_grad = torch.zeros(b,d,r,c)
+    pad = torch.zeros(b,d,r,self.k).type(self.type)
+    right = torch.cat((right, pad), dim=3)
+    left = torch.cat((pad, left), dim=3)
+    l_grad = torch.zeros(b,d,r,c).type(self.type)
+    r_grad = torch.zeros(b,d,r,c).type(self.type)
     for i in range(k):
       l_grad += grad_output[:, i:i+1, :, :] * right[:, :, :, i:i+c]
       r_grad += grad_output[:, i:i+1, :, :] * left[:, :, :, k-i:k-i+c]
