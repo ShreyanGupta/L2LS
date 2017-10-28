@@ -6,20 +6,17 @@ import numpy as np
 
 class KittyDataset(Dataset):
   """Kitty dataset"""
-  DATA_DIR = '/Users/ankitanand/Desktop/Stereo_CRF_CNN/Datasets/Kitty/data_scene_flow'
-  def __init__(self, root=DATA_DIR, split='training', transform=False):
-      self.root = root
-      self.split = split
-      self._transform = transform
-      self.files = collections.defaultdict(list)
-      for split in ['training', 'testing']:
-            file_list = os.listdir(root + '/' + split+'/myimage_2')
-            self.files[split] = file_list    
-  
+  def __init__(self, root, split='training', transform=None):
+    self.root = root
+    self.split = split
+    self._transform = transform
+    self.files = collections.defaultdict(list)
+    for split in ['training', 'testing']:
+      file_list = os.listdir(root + '/' + split+'/myimage_2')
+      self.files[split] = file_list
 
   def __len__(self):
     return len(self.files[self.split])
-
 
   def __getitem__(self, i):
     """
@@ -32,16 +29,25 @@ class KittyDataset(Dataset):
     lbl_path = self.root + '/' + self.split + '/disp_noc_0/' + img_name
 
     left_img = m.imread(left_img_path)
-    left_img = np.array(left_img, dtype=np.uint8)
+    left_img = np.array(left_img, dtype=np.float32)
+    left_img = left_img.transpose(2,0,1)
+    left_img = (left_img - left_img.mean())/left_img.std()
+    # print "left", left_img.mean(), left_img.std()
 
-    right_img =m.imread(right_img_path)
-    right_img =np.array(right_img,dtype=np.uint8)
+    right_img = m.imread(right_img_path)
+    right_img = np.array(right_img,dtype=np.float32)
+    right_img = right_img.transpose(2,0,1)
+    right_img = (right_img - right_img.mean())/right_img.std()
+    # print "right", right_img.mean(), right_img.std()
 
+
+    # TODO(AA) : Figure out the right representation of imread
+    # TODO(AA) : Normalize the input as per paper
     lbl = m.imread(lbl_path)
-    lbl = np.array(lbl, dtype=np.int32)
+    lbl = np.array(lbl, dtype=np.int64)
 
     if self._transform:
-        left_img, right_img, lbl = self.transform(img, lbl)
+      left_img, right_img, lbl = self.transform(img, lbl)
 
     return left_img, right_img, lbl
     

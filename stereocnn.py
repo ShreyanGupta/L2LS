@@ -3,7 +3,14 @@ import torch
 from torch.autograd import Variable
 
 from unary import Unary
-from correlation import Correlation
+# from correlation import Correlation
+
+def correlation(left, right, k):
+  b,d,r,c = left.size()
+  pad = Variable(torch.zeros(b,d,r,k))
+  right = torch.cat((right, pad), dim=3)
+  corr_vec = [(left*right.narrow(3,i,c)).sum(1) for i in range(k)]
+  return torch.stack(corr_vec, dim=1)
 
 class StereoCNN(nn.Module):
   """Stereo vision module"""
@@ -13,18 +20,17 @@ class StereoCNN(nn.Module):
         k (int): Disparity label count
     """
     super(StereoCNN, self).__init__()
-    # TODO(SG) : Zero mean and unit variance karna hai
     self.k = k
     self.unary_left = Unary(i)
     self.unary_right = Unary(i)
 
-    # TODO(SG) : check if this softmax is the required softmax
-    #self.softmax = nn.Softmax()
-
   def forward(self, l, r):
-    l,r=l.type(torch.FloatTensor),r.type(torch.FloatTensor)
+    print "begin unary"
     phi_left = self.unary_left(l)
     phi_right = self.unary_right(r)
-    corr=Correlation()(phi_left, phi_right)
+    print "begin corr"
+    # corr = Correlation(self.k)(phi_left, phi_right)
+    corr = correlation(phi_left, phi_right, self.k)
+    print corr.size()
+    print "exit forward"
     return corr
-
