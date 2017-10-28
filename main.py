@@ -1,3 +1,4 @@
+import os
 import argparse
 import torch
 import torch.nn as nn
@@ -7,6 +8,7 @@ from torch.autograd import Variable
 
 from dataset import KittyDataset
 from stereocnn import StereoCNN
+from compute_error import compute_error
 
 parser = argparse.ArgumentParser(description='StereoCNN model')
 parser.add_argument('-k', "--disparity", type=int, default=256)
@@ -31,6 +33,7 @@ num_workers = 4
 # DATA_DIR = '/Users/ankitanand/Desktop/Stereo_CRF_CNN/Datasets/Kitty/data_scene_flow'
 DATA_DIR = '/Users/Shreyan/Downloads/Datasets/Kitty/data_scene_flow'
 # DATA_DIR = '/home/ankit/Stereo_CNN_CRF/Datasets/Kitty/data_scene_flow'
+save_path = "saved_model/model.pkl"
 
 def main():
   train_set = KittyDataset(DATA_DIR)
@@ -48,7 +51,7 @@ def main():
     for i, data in enumerate(train_loader):
       left_img, right_img, labels = data
       # No clamping might be dangerous
-      # labels.clamp_(0,k-1)
+      labels.clamp_(0,k-1)
 
       if torch.cuda.is_available():
         left_img = left_img.cuda()
@@ -60,15 +63,18 @@ def main():
       labels = Variable(labels)
 
       y_pred = model(left_img, right_img)
-      _, y_labels = torch.max(y_pred, dim=1)
       y_pred = y_pred.permute(0,2,3,1)
       y_pred = y_pred.contiguous()
+      _, y_labels = torch.max(y_pred, dim=3)
       
       loss = loss_fn(y_pred.view(-1,k), labels.view(-1))
       optimizer.zero_grad()
       loss.backward()
       optimizer.step()
-      print("loss", i, loss.data[0])
+      error = compute_error(i, y_labels.data.numpy(), labels.data.numpy())
+      # error = 0
+      print("loss, error", i, loss.data[0], error)
+    torch.save(model, save_path)
 
 if __name__ == "__main__":
   main()
