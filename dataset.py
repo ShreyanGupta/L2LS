@@ -31,10 +31,12 @@ class KittyDataset(Dataset):
 
     left_img = m.imread(left_img_path)
     left_img = np.array(left_img, dtype=np.float32)
+    # left_img = np.pad(left_img, ((0,376-left_img.shape[0]), (0,1242-left_img.shape[1]), (0,0)), 'constant', constant_values=0)
     left_img = left_img.transpose(2,0,1)
 
     right_img = m.imread(right_img_path)
     right_img = np.array(right_img,dtype=np.float32)
+    # right_img = np.pad(right_img, ((0,376-right_img.shape[0]), (0,1242-right_img.shape[1]), (0,0)), 'constant', constant_values=0)
     right_img = right_img.transpose(2,0,1)
     
     # Normalizing images
@@ -43,6 +45,7 @@ class KittyDataset(Dataset):
 
     lbl = m.imread(lbl_path)
     lbl = np.array(lbl, dtype=np.int64)
+    # lbl = np.pad(lbl, ((0,376-lbl.shape[0]), (0,1242-lbl.shape[1])), 'constant', constant_values=0)
     lbl = lbl/256
 
     if self._transform:
