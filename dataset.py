@@ -13,7 +13,7 @@ class KittyDataset(Dataset):
     self._transform = transform
     self.files = collections.defaultdict(list)
     for split in ['training', 'testing']:
-        self.files[split] = os.listdir(root + '/' + split+'/myimage_2')
+        self.files[split] = os.listdir(self.root + '/' + split+'/myimage_2')
 
 
   def __len__(self):
@@ -99,6 +99,7 @@ class MiddleburyDataset(Dataset):
       lbl = load_pfm(lbl_path)
       lbl=lbl[0]
       lbl[lbl==np.inf]=-1
+      
       if self._transform:
           left_img, right_img, lbl = self.transform(img, lbl)
 

@@ -21,5 +21,6 @@ class Unary(nn.Module):
   def forward(self, x):
     x = F.tanh(self.conv1(x))
     for layer in self.layers:
+      
       x = F.tanh(layer(self.padding(x)))
     return x
