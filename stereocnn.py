@@ -9,8 +9,8 @@ class StereoCNN(nn.Module):
   """Stereo vision module"""
   def __init__(self, i, k):
     """Args:
-        i (int): Number of layers in the Unary units
-        k (int): Disparity label count
+      i (int): Number of layers in the Unary units
+      k (int): Disparity label count
     """
     super(StereoCNN, self).__init__()
     self.k = k

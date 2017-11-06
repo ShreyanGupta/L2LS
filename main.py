@@ -31,9 +31,9 @@ batch_size = args.batch_size
 num_epoch = args.num_epoch
 num_workers = 4
 
-# DATA_DIR = '/Users/ankitanand/Desktop/Stereo_CRF_CNN/Datasets/Kitty/data_scene_flow'
-#DATA_DIR = '/Users/Shreyan/Downloads/Datasets/Kitty/data_scene_flow'
-DATA_DIR = '/home/ankit/Stereo_CNN_CRF/Datasets/'
+# DATA_DIR = '/Users/ankitanand/Desktop/Stereo_CRF_CNN/Datasets/'
+DATA_DIR = '/Users/Shreyan/Downloads/Datasets/'
+# DATA_DIR = '/home/ankit/Stereo_CNN_CRF/Datasets/'
 save_path = "saved_model/model.pkl"
 
 def main():
@@ -55,22 +55,23 @@ def main():
     for i, data in enumerate(train_loader):
       left_img, right_img, labels = data
       # No clamping might be dangerous
-      # labels.clamp_(0,k-1)
+      labels.clamp_(-1,k-1)
 
       if torch.cuda.is_available():
         left_img = left_img.cuda()
         right_img = right_img.cuda()
-        labels = labels.cuda().type('torch.cuda.LongTensor')
+        labels = labels.cuda()
       
       left_img = Variable(left_img)
       right_img = Variable(right_img)
-      labels = Variable(labels.type('torch.LongTensor'))
+      labels = Variable(labels)
 
       y_pred = model(left_img, right_img)
       y_pred = y_pred.permute(0,2,3,1)
       y_pred = y_pred.contiguous()
+      
       _, y_labels = torch.max(y_pred, dim=3)
-      labels=labels.cuda()
+
       loss = loss_fn(y_pred.view(-1,k), labels.view(-1))
       optimizer.zero_grad()
       loss.backward()

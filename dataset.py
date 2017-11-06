@@ -59,49 +59,47 @@ class MiddleburyDataset(Dataset):
   """Middlebury dataset"""
 
   def __init__(self, root, split='training', Resolution='Q',transform=None):
-      self.root = root + "Middlebury/Eval3/"
-      self.split = split
-      self._transform = transform
-      self.files = collections.defaultdict(list)
-      self.Resolution=Resolution
-      for split in ['training', 'test']:
-          print(self.root + split + Resolution)
-          os.system("rm "+self.root + split + Resolution+"/.DS_Store ")
-          self.files[split] = os.listdir(self.root + split + Resolution )
-
-
+    self.root = root + "Middlebury/Eval3/"
+    self.split = split
+    self._transform = transform
+    self.files = collections.defaultdict(list)
+    self.Resolution=Resolution
+    for split in ['training', 'test']:
+        print(self.root + split + Resolution)
+        os.system("rm "+self.root + split + Resolution+"/.DS_Store ")
+        self.files[split] = os.listdir(self.root + split + Resolution )
 
   def __len__(self):
-      return len(self.files[self.split])
+    return len(self.files[self.split])
 
   def __getitem__(self, i):
-      """
-        Get the ith item from the dataset
-        Return : left_img, right_img, target
-      """
+    """
+      Get the ith item from the dataset
+      Return : left_img, right_img, target
+    """
 
-      img_name = self.files[self.split][i]
-      left_img_path = self.root  + self.split + self.Resolution + '/' + img_name+ '/' + 'im0.png'
-      right_img_path = self.root + self.split + self.Resolution + '/' + img_name+ '/' + 'im1_rectified.png'
+    img_name = self.files[self.split][i]
+    left_img_path = self.root  + self.split + self.Resolution + '/' + img_name+ '/' + 'im0.png'
+    right_img_path = self.root + self.split + self.Resolution + '/' + img_name+ '/' + 'im1_rectified.png'
 
-      lbl_path = self.root + "GT-" + self.split + self.Resolution + '/' + img_name+ '/' +'disp0GT.pfm'
-      left_img = m.imread(left_img_path)
-      left_img = np.array(left_img, dtype=np.float32)
-      left_img = left_img.transpose(2, 0, 1)
+    lbl_path = self.root + "GT-" + self.split + self.Resolution + '/' + img_name+ '/' +'disp0GT.pfm'
+    left_img = m.imread(left_img_path)
+    left_img = np.array(left_img, dtype=np.float32)
+    left_img = left_img.transpose(2, 0, 1)
 
-      right_img = m.imread(right_img_path)
-      right_img = np.array(right_img, dtype=np.float32)
-      right_img = right_img.transpose(2, 0, 1)
+    right_img = m.imread(right_img_path)
+    right_img = np.array(right_img, dtype=np.float32)
+    right_img = right_img.transpose(2, 0, 1)
 
-      # Normalizing images
-      left_img = (left_img - left_img.mean()) / left_img.std()
-      right_img = (right_img - right_img.mean()) / right_img.std()
+    # Normalizing images
+    left_img = (left_img - left_img.mean()) / left_img.std()
+    right_img = (right_img - right_img.mean()) / right_img.std()
 
-      lbl = load_pfm(lbl_path)
-      lbl=lbl[0]
-      lbl[lbl==np.inf]=-1
-      
-      if self._transform:
-          left_img, right_img, lbl = self.transform(img, lbl)
+    lbl = load_pfm(lbl_path)
+    lbl = np.array(lbl[0], dtype=np.int64)
+    lbl[lbl==np.inf] = -1
+    
+    if self._transform:
+      left_img, right_img, lbl = self.transform(img, lbl)
 
-      return left_img, right_img, lbl
+    return left_img, right_img, lbl
