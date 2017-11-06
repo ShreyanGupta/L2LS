@@ -17,6 +17,7 @@ class KittyDataset(Dataset):
 
 
   def __len__(self):
+    return 1
     return len(self.files[self.split])
 
   def __getitem__(self, i):
@@ -52,7 +53,8 @@ class KittyDataset(Dataset):
     if self._transform:
       left_img, right_img, lbl = self.transform(img, lbl)
 
-    return left_img, right_img, lbl
+    s = 350
+    return left_img[:, 0:s, 0:s], right_img[:, 0:s, 0:s], lbl[0:s, 0:s]
     
 
 class MiddleburyDataset(Dataset):

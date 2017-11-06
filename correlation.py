@@ -92,7 +92,7 @@ class Correlation(autograd.Function):
 # Testing
 
 # k = 2
-b, d, r, c = 1, 5, 4, 6
+# b, d, r, c = 1, 5, 4, 6
 
 def correlation(left, right, k):
   b,d,r,c = left.size()
