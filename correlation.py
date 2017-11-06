@@ -2,6 +2,8 @@ import torch
 import numpy as np
 import torch.autograd as autograd
 from torch.autograd import Variable
+import torch.nn as nn
+import torch.nn.functional as F
 
 class Correlation(autograd.Function):
   """
@@ -26,9 +28,11 @@ class Correlation(autograd.Function):
     right = torch.cat((right, pad), dim=3)
     corr_vec = [(left * right[:, :, :, i:i+c]).sum(dim=1) for i in range(self.k)]
     return torch.stack(corr_vec, dim=1)
+    
 
   def backward(self, grad_output):
     """Calculate the gradients of left and right"""
+    print("Gradient Before Correlation",torch.max(grad_output),torch.min(grad_output))
     left, right = self.saved_tensors
     b,d,r,c = left.size()
     pad = torch.zeros(b,d,r,self.k).type(self.type)
@@ -36,9 +40,13 @@ class Correlation(autograd.Function):
     left = torch.cat((pad, left), dim=3)
     l_grad = torch.zeros(b,d,r,c).type(self.type)
     r_grad = torch.zeros(b,d,r,c).type(self.type)
-    for i in range(k):
+   
+    
+   
+    for i in range(self.k):
       l_grad += grad_output[:, i:i+1, :, :] * right[:, :, :, i:i+c]
-      r_grad += grad_output[:, i:i+1, :, :] * left[:, :, :, k-i:k-i+c]
+      r_grad += grad_output[:, i:i+1, :, :] * left[:, :, :, self.k-i:self.k-i+c]
+    print("Gradient After Correlation",torch.max(l_grad),torch.min(l_grad))
     return l_grad, r_grad
 
 
@@ -54,12 +62,12 @@ class Correlation(autograd.Function):
 #     # left, right are a batch x 100 x w x h Tensor
 #     # return a batch x L x w x h Tensor (L is the number of labels)
 #     self.save_for_backward(left, right)
-#     left = left.numpy()
-#     right = right.numpy()
+#     left = left.cpu().numpy()
+#     right = right.cpu().numpy()
 #     b, _, w, h = left.shape
 #     output = np.empty((b, 0, w, h))
 #     for i in range(self.k):
-#       print "i =", i
+     
 #       zero = np.zeros((b, i, h))
 #       l = left[:, :, 0:w - i, :]
 #       r = right[:, :, i:w, :]
@@ -69,45 +77,45 @@ class Correlation(autograd.Function):
 #     output_tensor = torch.from_numpy(output)
 #     return output_tensor
 
-  # def backward(self, grad_output):
-  #   """Calculate the gradients"""
-  #   # grad_output c is batch x k x w x h tensor del(L)/del(c)
-  #   print("in Backward")
-  #   left, right = self.saved_tensors
-  #   b, d, w, h = left.shape
-  #   l_grad = np.zeros((b, d, w, h))
-  #   r_grad = np.zeros((b, d, w, h))
-  #   for i in range(self.k):
-  #     zero = np.zeros((b, d, i, h))
-  #     temp_l_grad = np.multiply(grad_output[:, i:i + 1, i:w, h], left[:, :, 0:w - i, h])
-  #     temp_r_grad = np.multiply(grad_output[:, i:i + 1, 0:w - i, h], right[:, :, i:w, h])
-  #     l_grad += np.concatenate((zero, temp_l_grad), axis=2)
-  #     r_grad += np.concatenate((temp_r_grad, zero), axis=2)
-  #   l_grad = Variable(torch.from_numpy(l_grad.astype('float32')))
-  #   r_grad = Variable(torch.from_numpy(r_grad.astype('float32')))
-  #   print("end Backward")
-  #   return l_grad, r_grad
+#   def backward(self, grad_output):
+#     """Calculate the gradients"""
+#     # grad_output c is batch x k x w x h tensor del(L)/del(c)
+#     print("in Backward")
+#     left, right = self.saved_tensors
+#     b, d, w, h = left.shape
+#     l_grad = np.zeros((b, d, w, h))
+#     r_grad = np.zeros((b, d, w, h))
+#     for i in range(self.k):
+#       zero = np.zeros((b, d, i, h))
+#       temp_l_grad = np.multiply(grad_output[:, i:i + 1, i:w, h], left[:, :, 0:w - i, h])
+#       temp_r_grad = np.multiply(grad_output[:, i:i + 1, 0:w - i, h], right[:, :, i:w, h])
+#       l_grad += np.concatenate((zero, temp_l_grad), axis=2)
+#       r_grad += np.concatenate((temp_r_grad, zero), axis=2)
+#     l_grad = Variable(torch.from_numpy(l_grad.astype('float32')))
+#     r_grad = Variable(torch.from_numpy(r_grad.astype('float32')))
+#     print("end Backward")
+#     return l_grad, r_grad
 
 
 # Testing
 
-k = 2
-b, d, r, c = 1, 5, 4, 6
+#b, d, r, c = 1, 5, 4, 6
 
 def correlation(left, right, k):
+  self.k=k
   b,d,r,c = left.size()
-  pad = Variable(torch.zeros(b,d,r,k))
-  right = torch.cat((right, pad), dim=3)
-  corr_vec = [(left*right.narrow(3,i,c)).sum(1) for i in range(k)]
+  pad = Variable(torch.cuda.FloatTensor(b,d,r,k).zero_())
+  right = torch.cat([right, pad], dim=3)
+  corr_vec = [(left*right.narrow(3,i,c)).sum(1) for i in range(self.k)]
   return torch.stack(corr_vec, dim=1)
 
 if __name__ == "__main__":
   arr = np.array([i for i in range(b*d*r*c)]).reshape((b,d,r,c))
   
-  left = Variable(torch.FloatTensor(arr), requires_grad=True)
-  right = Variable(torch.FloatTensor(arr), requires_grad=True)
-  left2 = Variable(torch.FloatTensor(arr), requires_grad=True)
-  right2 = Variable(torch.FloatTensor(arr), requires_grad=True)
+  left = Variable(torch.cuda.FloatTensor(arr), requires_grad=True)
+  right = Variable(torch.cuda.FloatTensor(arr), requires_grad=True)
+  left2 = Variable(torch.cuda.FloatTensor(arr), requires_grad=True)
+  right2 = Variable(torch.cuda.FloatTensor(arr), requires_grad=True)
   
   ans = Correlation(k)(left,right)
   ans2 = another_correlation(left2, right2)
@@ -117,6 +125,6 @@ if __name__ == "__main__":
   ans.backward()
   ans2.backward()
   print ans
-  print "left grads", left.grad.data.equal(left2.grad.data)
-  print "right grads", right.grad.data.equal(right2.grad.data)
+  print ("left grads", torch.max(left.grad.data))
+  print ("right grads", torch.max(right.grad.data))
   # print(output)

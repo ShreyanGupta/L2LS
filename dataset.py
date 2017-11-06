@@ -24,6 +24,7 @@ class KittyDataset(Dataset):
       Get the ith item from the dataset
       Return : left_img, right_img, target
     """
+   
     img_name = self.files[self.split][i]
     left_img_path = self.root + '/' + self.split + '/myimage_2/' + img_name
     right_img_path= self.root + '/' + self.split + '/myimage_3/' + img_name 
@@ -46,7 +47,14 @@ class KittyDataset(Dataset):
     lbl = m.imread(lbl_path)
     lbl = np.array(lbl, dtype=np.int64)
     # lbl = np.pad(lbl, ((0,376-lbl.shape[0]), (0,1242-lbl.shape[1])), 'constant', constant_values=0)
+    
+    
+    lbl[lbl<=0]=-256 # Set the invalid Pixels
+
+    
     lbl = lbl/256
+    lbl= lbl.astype(int)
+    
 
     if self._transform:
       left_img, right_img, lbl = self.transform(img, lbl)
@@ -65,7 +73,7 @@ class MiddleburyDataset(Dataset):
       self.Resolution=Resolution
       for split in ['training', 'test']:
           print(self.root + split + Resolution)
-          os.system("rm "+self.root + split + Resolution+"/.DS_Store ")
+          #os.system("rm "+self.root + split + Resolution+"/.DS_Store ")
           self.files[split] = os.listdir(self.root + split + Resolution )
 
 
@@ -78,8 +86,8 @@ class MiddleburyDataset(Dataset):
         Get the ith item from the dataset
         Return : left_img, right_img, target
       """
-
-      img_name = self.files[self.split][i]
+      p=0
+      img_name = self.files[self.split][p]
       left_img_path = self.root  + self.split + self.Resolution + '/' + img_name+ '/' + 'im0.png'
       right_img_path = self.root + self.split + self.Resolution + '/' + img_name+ '/' + 'im1_rectified.png'
 
@@ -98,7 +106,11 @@ class MiddleburyDataset(Dataset):
 
       lbl = load_pfm(lbl_path)
       lbl=lbl[0]
+      lbl= lbl.astype(int)
+
+     
       lbl[lbl==np.inf]=-1
+
       
       if self._transform:
           left_img, right_img, lbl = self.transform(img, lbl)

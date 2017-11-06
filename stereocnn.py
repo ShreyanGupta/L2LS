@@ -3,7 +3,7 @@ import torch
 from torch.autograd import Variable
 
 from unary import Unary
-from correlation import Correlation
+from correlation import Correlation,correlation
 
 class StereoCNN(nn.Module):
   """Stereo vision module"""
@@ -16,9 +16,15 @@ class StereoCNN(nn.Module):
     self.k = k
     self.unary_left = Unary(i)
     self.unary_right = Unary(i)
+    #self.correlation=Correlation(self.k)
+
 
   def forward(self, l, r):
     phi_left = self.unary_left(l)
     phi_right = self.unary_right(r)
-    corr = Correlation(self.k)(phi_left, phi_right)
-    return corr
+    return phi_left,phi_right
+    #corr=self.correlation(phi_left,phi_right)
+    #corr = Correlation(self.k)(phi_left, phi_right)
+    #corr=correlation(phi_left,phi_right,self.k)
+    #return corr
+ 
