@@ -36,9 +36,9 @@ class Correlation(autograd.Function):
     left = torch.cat((pad, left), dim=3)
     l_grad = torch.zeros(b,d,r,c).type(self.type)
     r_grad = torch.zeros(b,d,r,c).type(self.type)
-    for i in range(k):
+    for i in range(self.k):
       l_grad += grad_output[:, i:i+1, :, :] * right[:, :, :, i:i+c]
-      r_grad += grad_output[:, i:i+1, :, :] * left[:, :, :, k-i:k-i+c]
+      r_grad += grad_output[:, i:i+1, :, :] * left[:, :, :, self.k-i:self.k-i+c]
     return l_grad, r_grad
 
 
@@ -91,7 +91,7 @@ class Correlation(autograd.Function):
 
 # Testing
 
-k = 2
+# k = 2
 b, d, r, c = 1, 5, 4, 6
 
 def correlation(left, right, k):

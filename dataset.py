@@ -47,6 +47,7 @@ class KittyDataset(Dataset):
     lbl = np.array(lbl, dtype=np.int64)
     # lbl = np.pad(lbl, ((0,376-lbl.shape[0]), (0,1242-lbl.shape[1])), 'constant', constant_values=0)
     lbl = lbl/256
+    lbl[lbl <= 0] = -1
 
     if self._transform:
       left_img, right_img, lbl = self.transform(img, lbl)

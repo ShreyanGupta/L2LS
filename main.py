@@ -44,7 +44,7 @@ def main():
   train_loader = DataLoader(train_set, batch_size=batch_size, num_workers=num_workers, shuffle=True)
   
   model = StereoCNN(unary_layers, k)
-  loss_fn = nn.CrossEntropyLoss()
+  loss_fn = nn.CrossEntropyLoss(ignore_index=-1)
   optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
 
   if torch.cuda.is_available():
@@ -55,7 +55,7 @@ def main():
     for i, data in enumerate(train_loader):
       left_img, right_img, labels = data
       # No clamping might be dangerous
-      labels.clamp_(0,k-1)
+      # labels.clamp_(0,k-1)
 
       if torch.cuda.is_available():
         left_img = left_img.cuda()
