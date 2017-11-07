@@ -55,7 +55,8 @@ def main():
   optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
   if torch.cuda.is_available():
     model = model.cuda()
-
+  for param in list(model.parameters):
+    nn.init.xavier_uniform(param)
   for epoch in range(num_epoch):
     print("epoch", epoch)
     for i, data in enumerate(train_loader):
@@ -64,6 +65,7 @@ def main():
       #labels=labels.clamp_(-1,k-1)
 
       
+
       if torch.cuda.is_available():
         left_img = left_img.cuda()
         right_img = right_img.cuda()

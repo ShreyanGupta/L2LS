@@ -25,7 +25,7 @@ class KittyDataset(Dataset):
       Return : left_img, right_img, target
     """
    
-    img_name = self.files[self.split][i]
+    img_name = self.files[self.split][0]
     left_img_path = self.root + '/' + self.split + '/myimage_2/' + img_name
     right_img_path= self.root + '/' + self.split + '/myimage_3/' + img_name 
     lbl_path = self.root + '/' + self.split + '/disp_noc_0/' + img_name

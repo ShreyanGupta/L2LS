@@ -15,12 +15,12 @@ from compute_error import compute_error
 parser = argparse.ArgumentParser(description='StereoCNN model')
 parser.add_argument('-k', "--disparity", type=int, default=256)
 parser.add_argument('-ul', "--unary-layers", type=int, default=7)
-parser.add_argument('-data', "--dataset", type=str, default="Middlebury")
+parser.add_argument('-data', "--dataset", type=str, default="Kitty")
 
 parser.add_argument('-lr', "--learning-rate", type=float, default=1e-2)
-parser.add_argument('-m', "--momentum", type=float, default=0.1)
+parser.add_argument('-m', "--momentum", type=float, default=0.0)
 parser.add_argument('-b', "--batch-size", type=int, default=1)
-parser.add_argument('-n', "--num-epoch", type=int, default=100)
+parser.add_argument('-n', "--num-epoch", type=int, default=1000)
 parser.add_argument('-v', "--verbose", type=bool, default=True)
 args = parser.parse_args()
 
@@ -52,7 +52,7 @@ def main():
   train_loader = DataLoader(train_set, batch_size=batch_size, num_workers=num_workers, shuffle=True)
   
   model = StereoCNN(unary_layers, k)
-  loss_fn = nn.CrossEntropyLoss(size_average=False,ignore_index=-1)
+  loss_fn = nn.CrossEntropyLoss(size_average=True,ignore_index=-1)
   optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
 
   if torch.cuda.is_available():
@@ -75,17 +75,22 @@ def main():
 	  right_img = Variable(right_img,requires_grad=True)
 	  labels = Variable(labels.type('torch.cuda.LongTensor'))
 	  left,right= model(left_img,right_img)
+	  #print(max(model.parameters),min(model.parameters))
 	  b,d,r,c = left.size()
 	  corr=Variable(torch.zeros(b,k,r,c).cuda())
 
 	 
-	  print("Left",left.size())
+	  #print("Left",left.size())
 	  
 	  for i in range(k):
-		corr[:,i,:,0:c-k] = (left[:,:,:,0:c-k]*right[:,:,:,i:c-k+i]).sum(1)
-	  for i in range(k):	
-	  	for j in range(k-i):	 
-	  		corr[:,j,:,c-k+i]=(left[:,:,:,c-k+i]*right[:,:,:,c-k+i+j]).sum(1)
+		corr[:,i,:,k:c] = (left[:,:,:,k:c]*right[:,:,:,k-i:c-i]).sum(1)
+	 #  for i in range(k):
+		# corr[:,i,:,0:c-k] = (left[:,:,:,0:c-k]*right[:,:,:,i:c-k+i]).sum(1)
+	  
+
+	  # for i in range(k):	
+	  # 	for j in range(k-i):	 
+	  # 		corr[:,j,:,c-k+i]=(left[:,:,:,c-k+i]*right[:,:,:,c-k+i+j]).sum(1)
 
 	  # for i in range(c-k):
 	  # 	for j in range(k):
@@ -93,7 +98,7 @@ def main():
 	  # 			corr1[:,j,:,i]=(left[:,:,:,i]*right[:,:,:,i+j]).sum(1)
 	  # print("Norm_Diff",corr-corr1)		
 				
-	  print(corr.size())
+	  #print(corr.size())
 	  # pad = Variable(torch.cuda.FloatTensor(b,d,r,k).zero_())
 	  # right = torch.cat([right, pad], dim=3)
 	  # corr_vec = [(left*right.narrow(3,i,c)).sum(1) for i in range(k)]
@@ -101,10 +106,10 @@ def main():
 	  # y_pred = torch.stack(corr_vec, dim=1)
 	  #y_pred = model(left_img, right_img)
 	  y_pred_perm = corr.permute(0,2,3,1)
-	  y_pred_perm.register_hook(print)
+	  #y_pred_perm.register_hook(print)
 	  y_pred_ctgs = y_pred_perm.contiguous()
 	  y_pred_flat= y_pred_ctgs.view(-1,k)
-	  y_pred_.register_hook(print)
+	  #y_pred_.register_hook(print)
 	  y_vals, y_labels = torch.max(y_pred_ctgs, dim=3)
 	 
 	  loss = loss_fn(y_pred_flat, labels.view(-1))
