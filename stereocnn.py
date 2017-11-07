@@ -14,11 +14,10 @@ class StereoCNN(nn.Module):
     """
     super(StereoCNN, self).__init__()
     self.k = k
-    self.unary_left = Unary(i)
-    self.unary_right = Unary(i)
+    self.unary = Unary(i)
 
   def forward(self, l, r):
-    phi_left = self.unary_left(l)
-    phi_right = self.unary_right(r)
+    phi_left = self.unary(l)
+    phi_right = self.unary(r)
     corr = Correlation(self.k)(phi_left, phi_right)
     return corr
