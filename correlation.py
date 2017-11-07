@@ -17,76 +17,54 @@ class Correlation(autograd.Function):
     super(Correlation, self).__init__()
     self.k = k
 
+  # def forward(self, left, right):
+  #   """ Receive input tensor, return output tensor"""
+  #   self.save_for_backward(left, right)
+  #   self.type = left.type()
+  #   b,d,r,c = left.size()
+  #   pad = torch.zeros(b,d,r,self.k).type(self.type)
+  #   right = torch.cat((right, pad), dim=3)
+  #   corr_vec = [(left * right[:, :, :, i:i+c]).sum(dim=1) for i in range(self.k)]
+  #   return torch.stack(corr_vec, dim=1)
+
   def forward(self, left, right):
     """ Receive input tensor, return output tensor"""
     self.save_for_backward(left, right)
     self.type = left.type()
     b,d,r,c = left.size()
-    pad = torch.zeros(b,d,r,self.k).type(self.type)
-    right = torch.cat((right, pad), dim=3)
-    corr_vec = [(left * right[:, :, :, i:i+c]).sum(dim=1) for i in range(self.k)]
+    pad = torch.zeros(b,d,r,self.k-1).type(self.type)
+    right = torch.cat((pad, right), dim=3)
+    corr_vec = [(left * right[:, :, :, self.k-1-i:self.k-1-i+c]).sum(dim=1) for i in range(self.k)]
     return torch.stack(corr_vec, dim=1)
+
+  # def backward(self, grad_output):
+  #   """Calculate the gradients of left and right"""
+  #   left, right = self.saved_tensors
+  #   b,d,r,c = left.size()
+  #   pad = torch.zeros(b,d,r,self.k).type(self.type)
+  #   right = torch.cat((right, pad), dim=3)
+  #   left = torch.cat((pad, left), dim=3)
+  #   l_grad = torch.zeros(b,d,r,c).type(self.type)
+  #   r_grad = torch.zeros(b,d,r,c).type(self.type)
+  #   for i in range(self.k):
+  #     l_grad += grad_output[:, i:i+1, :, :] * right[:, :, :, i:i+c]
+  #     r_grad += grad_output[:, i:i+1, :, :] * left[:, :, :, self.k-i:self.k-i+c]
+  #   return l_grad, r_grad
 
   def backward(self, grad_output):
     """Calculate the gradients of left and right"""
     left, right = self.saved_tensors
     b,d,r,c = left.size()
-    pad = torch.zeros(b,d,r,self.k).type(self.type)
-    right = torch.cat((right, pad), dim=3)
-    left = torch.cat((pad, left), dim=3)
+    pad = torch.zeros(b,d,r,self.k-1).type(self.type)
+    right = torch.cat((pad, right), dim=3)
+    left = torch.cat((left, pad), dim=3)
     l_grad = torch.zeros(b,d,r,c).type(self.type)
     r_grad = torch.zeros(b,d,r,c).type(self.type)
     for i in range(self.k):
-      l_grad += grad_output[:, i:i+1, :, :] * right[:, :, :, i:i+c]
-      r_grad += grad_output[:, i:i+1, :, :] * left[:, :, :, self.k-i:self.k-i+c]
+      l_grad += grad_output[:, i:i+1, :, :] * right[:, :, :, self.k-1-i:self.k-1-i+c]
+      r_grad += grad_output[:, i:i+1, :, :] * left[:, :, :, i:i+c]
     return l_grad, r_grad
 
-
-# Old correlation
-
-# class Correlation(autograd.Function):
-#   def __init__(self, k):
-#     super(Correlation, self).__init__()
-#     self.k = k
-
-#   def forward(self, left, right):
-#     """ Receive Tensor input, return output tensor"""
-#     # left, right are a batch x 100 x w x h Tensor
-#     # return a batch x L x w x h Tensor (L is the number of labels)
-#     self.save_for_backward(left, right)
-#     left = left.numpy()
-#     right = right.numpy()
-#     b, _, w, h = left.shape
-#     output = np.empty((b, 0, w, h))
-#     for i in range(self.k):
-#       print "i =", i
-#       zero = np.zeros((b, i, h))
-#       l = left[:, :, 0:w - i, :]
-#       r = right[:, :, i:w, :]
-#       layer = np.einsum('abcd,abcd->acd', l, r)
-#       layer = np.concatenate((layer, zero), axis=1)
-#       output = np.concatenate((output, layer.reshape(b, 1, w, h)), axis=1)
-#     output_tensor = torch.from_numpy(output)
-#     return output_tensor
-
-  # def backward(self, grad_output):
-  #   """Calculate the gradients"""
-  #   # grad_output c is batch x k x w x h tensor del(L)/del(c)
-  #   print("in Backward")
-  #   left, right = self.saved_tensors
-  #   b, d, w, h = left.shape
-  #   l_grad = np.zeros((b, d, w, h))
-  #   r_grad = np.zeros((b, d, w, h))
-  #   for i in range(self.k):
-  #     zero = np.zeros((b, d, i, h))
-  #     temp_l_grad = np.multiply(grad_output[:, i:i + 1, i:w, h], left[:, :, 0:w - i, h])
-  #     temp_r_grad = np.multiply(grad_output[:, i:i + 1, 0:w - i, h], right[:, :, i:w, h])
-  #     l_grad += np.concatenate((zero, temp_l_grad), axis=2)
-  #     r_grad += np.concatenate((temp_r_grad, zero), axis=2)
-  #   l_grad = Variable(torch.from_numpy(l_grad.astype('float32')))
-  #   r_grad = Variable(torch.from_numpy(r_grad.astype('float32')))
-  #   print("end Backward")
-  #   return l_grad, r_grad
 
 
 # Testing
