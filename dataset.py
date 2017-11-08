@@ -53,8 +53,8 @@ class KittyDataset(Dataset):
       left_img, right_img, lbl = self.transform(img, lbl)
 
     s = 350
-    return left_img[:, 0:s, 0:s], right_img[:, 0:s, 0:s], lbl[0:s, 0:s]
-    
+    # return left_img[:, 0:s, 0:s], right_img[:, 0:s, 0:s], lbl[0:s, 0:s]
+    return left_img, right_img, lbl
 
 
 class MiddleburyDataset(Dataset):

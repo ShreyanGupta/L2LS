@@ -19,8 +19,11 @@ class StereoCNN(nn.Module):
     self.unary = Unary(i)
 
   def forward(self, l, r):
+    # phi_left = self.unary_left(l)
+    # phi_right = self.unary_right(r)
     phi_left = self.unary(l)
-    phi_right = self.unary(r)
+    phi_right = self.unary(r)   
+ 
     print("phi", phi_left.min().data[0], phi_left.max().data[0], phi_right.min().data[0], phi_right.max().data[0])
     corr = Correlation(self.k)(phi_left, phi_right)
     corr2 = correlation(phi_left, phi_right, self.k)

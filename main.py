@@ -68,7 +68,10 @@ def main():
     model = model.cuda()
 
   for l in list(model.parameters()):
-    l.register_hook(lambda x: print("model grad", x.min().data[0], x.max().data[0]))
+    # l.register_hook(lambda x: print("model grad", x.min().data[0], x.max().data[0]))
+    print(l.size())
+    if len(l.size()) >= 2:
+        nn.init.xavier_normal(l)
 
   for epoch in range(num_epoch):
     print("epoch", epoch)
