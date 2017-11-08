@@ -33,8 +33,8 @@ num_epoch = args.num_epoch
 num_workers = 4
 
 # DATA_DIR = '/Users/ankitanand/Desktop/Stereo_CRF_CNN/Datasets/'
-DATA_DIR = '/Users/Shreyan/Downloads/Datasets/'
-# DATA_DIR = '/home/ankit/Stereo_CNN_CRF/Datasets/'
+# DATA_DIR = '/Users/Shreyan/Downloads/Datasets/'
+DATA_DIR = '/home/ankit/Stereo_CNN_CRF/Datasets/'
 save_path = "saved_model/model.pkl"
 
 def main():
@@ -52,7 +52,10 @@ def main():
     model = model.cuda()
 
   for l in list(model.parameters()):
-    l.register_hook(lambda x: print("model grad", x.min().data[0], x.max().data[0]))
+    # l.register_hook(lambda x: print("model grad", x.min().data[0], x.max().data[0]))
+    print(l.size())
+    if len(l.size()) >= 2:
+        nn.init.xavier_normal(l)
 
   for epoch in range(num_epoch):
     # print("epoch", epoch)

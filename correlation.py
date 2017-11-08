@@ -74,7 +74,7 @@ class Correlation(autograd.Function):
 
 def correlation(left, right, k):
   b,d,r,c = left.size()
-  pad = Variable(torch.zeros(b,d,r,k))
+  pad = Variable(torch.zeros(b,d,r,k).type(left.type()))
   right = torch.cat((right, pad), dim=3)
   corr_vec = [(left*right.narrow(3,i,c)).sum(1) for i in range(k)]
   return torch.stack(corr_vec, dim=1)
