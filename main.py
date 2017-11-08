@@ -72,7 +72,7 @@ def main():
 
   for epoch in range(num_epoch):
     print("epoch", epoch)
-    torch.save(model, model_save_path)
+    # torch.save(model, model_save_path)
     scheduler.step()
     for i, data in enumerate(train_loader):
       left_img, right_img, labels = data
@@ -97,15 +97,12 @@ def main():
       # print temp[:, 50:60, 50:60], y_labels[:, 50:60, 50:60]
       print("y_labels", y_labels.min().data[0], y_labels.max().data[0])
 
-      print "backward"
+      print("backward")
       loss = loss_fn(y_pred.view(-1,k), labels.view(-1))
       loss.backward()
-      error = compute_error(i, y_labels.data.cpu().numpy(), labels.data.cpu().numpy())
-      # error = 0
+      optimizer.step()
       for l in list(model.parameters()):
         print("model", l.min().data[0], l.max().data[0])
-      print("loss", loss.data[0], "error", error)
-      optimizer.step()
       error = compute_error(epoch, i, log_file, loss.data[0], y_labels.data.cpu().numpy(), labels.data.cpu().numpy())
 
 if __name__ == "__main__":
