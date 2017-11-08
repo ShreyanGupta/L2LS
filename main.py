@@ -32,15 +32,10 @@ batch_size = args.batch_size
 num_epoch = args.num_epoch
 num_workers = 1
 verbose=args.verbose
-
-# DATA_DIR = '/Users/ankitanand/Desktop/Stereo_CRF_CNN/Datasets/Kitty/data_scene_flow'
 #DATA_DIR = '/Users/Shreyan/Downloads/Datasets/Kitty/data_scene_flow'
 DATA_DIR = '/home/ankit/Stereo_CNN_CRF/Datasets/'
 save_path = "saved_model/model.pkl"
 
-def print_grad(grad):
-  print("Grad_Max")
-  print(torch.max(grad))
 
 def main():
   if(dataset=="Middlebury"):
@@ -51,8 +46,8 @@ def main():
   
   model = StereoCNN(unary_layers, k)
   loss_fn = nn.CrossEntropyLoss(size_average=False,ignore_index=-1)
-  #optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
-  optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+  optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
+  #optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
   if torch.cuda.is_available():
     model = model.cuda()
   for param in list(model.parameters):

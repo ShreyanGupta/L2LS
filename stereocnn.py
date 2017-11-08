@@ -20,6 +20,7 @@ class StereoCNN(nn.Module):
 
 
   def forward(self, l, r):
+<<<<<<< Updated upstream
     phi_left = self.unary_left(l)
     phi_right = self.unary_right(r)
     return phi_left,phi_right
@@ -28,3 +29,10 @@ class StereoCNN(nn.Module):
     #corr=correlation(phi_left,phi_right,self.k)
     #return corr
  
+=======
+    phi_left = self.unary(l)
+    phi_right = self.unary(r)
+   
+    corr = Correlation(self.k)(phi_left, phi_right)
+    return corr
+>>>>>>> Stashed changes

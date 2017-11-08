@@ -9,7 +9,7 @@ from torch.utils.data import DataLoader
 from torch.autograd import Variable
 from dataset import MiddleburyDataset
 from dataset import KittyDataset
-from stereocnn import StereoCNN
+from stereocnn1 import StereoCNN
 from compute_error import compute_error
 
 parser = argparse.ArgumentParser(description='StereoCNN model')
@@ -22,6 +22,8 @@ parser.add_argument('-m', "--momentum", type=float, default=0.0)
 parser.add_argument('-b', "--batch-size", type=int, default=1)
 parser.add_argument('-n', "--num-epoch", type=int, default=1000)
 parser.add_argument('-v', "--verbose", type=bool, default=True)
+parser.add_argument('-ms', "--model-file", type=str, default="model1.pkl")
+parser.add_argument('-ls', "--log-file", type=str, default="logs1.txt")
 args = parser.parse_args()
 
 # Global variables
@@ -50,6 +52,19 @@ def main():
   else:
 	train_set = KittyDataset(DATA_DIR)
   train_loader = DataLoader(train_set, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+model_save_path = os.path.join("experiments", args.model_file)
+log_file = open(os.path.join("experiments", args.log_file), "w")
+
+
+def main():
+  if(dataset=="Middlebury"):
+	train_set = MiddleburyDataset(DATA_DIR,'split_train')
+	val_set = MiddleburyDataset(DATA_DIR,'split_val')
+  else:
+	train_set = KittyDataset(DATA_DIR,'split_train')
+	val_set = KittyDataset(DATA_DIR,'split_train')
+  train_loader = DataLoader(train_set, batch_size=batch_size, num_workers=num_workers, shuffle=True)
+
   
   model = StereoCNN(unary_layers, k)
   loss_fn = nn.CrossEntropyLoss(size_average=True,ignore_index=-1)
@@ -60,6 +75,7 @@ def main():
 
   for epoch in range(num_epoch):
 	print("epoch", epoch)
+	torch.save(model, model_save_path)
 	for i, data in enumerate(train_loader):
 	  left_img, right_img, labels = data
 	  # No clamping might be dangerous
@@ -119,11 +135,11 @@ def main():
 	 
 	  optimizer.step()
 	  
-	  error = compute_error(i, y_labels.data.cpu().numpy(), labels.data.cpu().numpy())
+	  error = compute_error(epoch, i, log_file, loss.data[0], y_labels.data.cpu().numpy(), labels.data.cpu().numpy())
 	  # error = 0
-	  if(verbose):
+	 if(verbose):
 		print("loss, error", i, loss.data[0], error)
-	torch.save(model, save_path)
+	
 
 if __name__ == "__main__":
   main()

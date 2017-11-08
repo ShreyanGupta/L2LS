@@ -12,7 +12,7 @@ class KittyDataset(Dataset):
     self.split = split
     self._transform = transform
     self.files = collections.defaultdict(list)
-    for split in ['training', 'testing']:
+    for split in ['training','testing']:
         self.files[split] = os.listdir(self.root + '/' + split+'/myimage_2')
 
 
