@@ -31,10 +31,10 @@ class Correlation(autograd.Function):
     """ Receive input tensor, return output tensor"""
     self.save_for_backward(left, right)
     self.type = left.type()
-    b,d,r,c = left.size()
-    pad = torch.zeros(b,d,r,self.k-1).type(self.type)
+    (b,d,r,c),k = left.size(), self.k
+    pad = torch.zeros(b,d,r,k-1).type(self.type)
     right = torch.cat((pad, right), dim=3)
-    corr_vec = [(left * right[:, :, :, self.k-1-i:self.k-1-i+c]).sum(dim=1) for i in range(self.k)]
+    corr_vec = [(left * right[:, :, :, k-1-i:k-1-i+c]).sum(dim=1) for i in range(k)]
     return torch.stack(corr_vec, dim=1)
 
   # def backward(self, grad_output):
@@ -54,32 +54,29 @@ class Correlation(autograd.Function):
   def backward(self, grad_output):
     """Calculate the gradients of left and right"""
     left, right = self.saved_tensors
-    b,d,r,c = left.size()
-    pad = torch.zeros(b,d,r,self.k-1).type(self.type)
+    (b,d,r,c),k = left.size(), self.k
+    pad = torch.zeros(b,d,r,k-1).type(self.type)
     right = torch.cat((pad, right), dim=3)
     left = torch.cat((left, pad), dim=3)
     l_grad = torch.zeros(b,d,r,c).type(self.type)
     r_grad = torch.zeros(b,d,r,c).type(self.type)
-    for i in range(self.k):
-      l_grad += grad_output[:, i:i+1, :, :] * right[:, :, :, self.k-1-i:self.k-1-i+c]
+    for i in range(k):
+      l_grad += grad_output[:, i:i+1, :, :] * right[:, :, :, k-1-i:k-1-i+c]
       r_grad += grad_output[:, i:i+1, :, :] * left[:, :, :, i:i+c]
     return l_grad, r_grad
 
+def correlation(left, right, k):
+  b,d,r,c = left.size()
+  pad = Variable(torch.zeros(b,d,r,k-1).type(left.type))
+  right = torch.cat((pad, right), dim=3)
+  corr_vec = [(left*right.narrow(3,k-1-i,c)).sum(1) for i in range(k)]
+  return torch.stack(corr_vec, dim=1)
 
 
 # Testing
-
-# k = 2
-# b, d, r, c = 1, 5, 4, 6
-
-def correlation(left, right, k):
-  b,d,r,c = left.size()
-  pad = Variable(torch.zeros(b,d,r,k))
-  right = torch.cat((right, pad), dim=3)
-  corr_vec = [(left*right.narrow(3,i,c)).sum(1) for i in range(k)]
-  return torch.stack(corr_vec, dim=1)
-
 if __name__ == "__main__":
+  # k = 2
+  b, d, r, c = 1, 5, 4, 6
   arr = np.array([i for i in range(b*d*r*c)]).reshape((b,d,r,c))
   
   left = Variable(torch.FloatTensor(arr), requires_grad=True)

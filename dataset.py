@@ -15,7 +15,6 @@ class KittyDataset(Dataset):
     for split in ['training', 'testing']:
         self.files[split] = os.listdir(self.root + '/' + split+'/myimage_2')
 
-
   def __len__(self):
     return 1
     return len(self.files[self.split])
@@ -57,9 +56,9 @@ class KittyDataset(Dataset):
     return left_img[:, 0:s, 0:s], right_img[:, 0:s, 0:s], lbl[0:s, 0:s]
     
 
+
 class MiddleburyDataset(Dataset):
   """Middlebury dataset"""
-
   def __init__(self, root, split='training', Resolution='Q',transform=None):
     self.root = root + "Middlebury/Eval3/"
     self.split = split
@@ -79,7 +78,6 @@ class MiddleburyDataset(Dataset):
       Get the ith item from the dataset
       Return : left_img, right_img, target
     """
-
     img_name = self.files[self.split][i]
     left_img_path = self.root  + self.split + self.Resolution + '/' + img_name+ '/' + 'im0.png'
     right_img_path = self.root + self.split + self.Resolution + '/' + img_name+ '/' + 'im1_rectified.png'
