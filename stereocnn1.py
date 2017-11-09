@@ -3,7 +3,6 @@ import torch
 from torch.autograd import Variable
 
 from unary import Unary
-from correlation import Correlation
 
 class StereoCNN(nn.Module):
   """Stereo vision module"""

@@ -7,12 +7,12 @@ from load_pfm import load_pfm
 
 class KittyDataset(Dataset):
   """Kitty dataset"""
-  def __init__(self, root, split='training', transform=None):
+  def __init__(self, root, split='split_train', transform=None):
     self.root = root+"/Kitty/data_scene_flow"
     self.split = split
     self._transform = transform
     self.files = collections.defaultdict(list)
-    for split in ['training','testing']:
+    for split in ['split_train','testing']:
         self.files[split] = os.listdir(self.root + '/' + split+'/myimage_2')
 
 
@@ -25,7 +25,7 @@ class KittyDataset(Dataset):
       Return : left_img, right_img, target
     """
    
-    img_name = self.files[self.split][0]
+    img_name = self.files[self.split][i]
     left_img_path = self.root + '/' + self.split + '/myimage_2/' + img_name
     right_img_path= self.root + '/' + self.split + '/myimage_3/' + img_name 
     lbl_path = self.root + '/' + self.split + '/disp_noc_0/' + img_name
@@ -86,8 +86,7 @@ class MiddleburyDataset(Dataset):
         Get the ith item from the dataset
         Return : left_img, right_img, target
       """
-      p=0
-      img_name = self.files[self.split][p]
+      img_name = self.files[self.split][i]
       left_img_path = self.root  + self.split + self.Resolution + '/' + img_name+ '/' + 'im0.png'
       right_img_path = self.root + self.split + self.Resolution + '/' + img_name+ '/' + 'im1_rectified.png'
 

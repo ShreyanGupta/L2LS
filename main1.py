@@ -43,14 +43,15 @@ def print_grad(grad):
 
 # DATA_DIR = '/Users/ankitanand/Desktop/Stereo_CRF_CNN/Datasets/Kitty/data_scene_flow'
 #DATA_DIR = '/Users/Shreyan/Downloads/Datasets/Kitty/data_scene_flow'
-DATA_DIR = '/home/ankit/Stereo_CNN_CRF/Datasets/'
+#DATA_DIR = '/home/ankit/Stereo_CNN_CRF/Datasets/'
+DATA_DIR = '/scratch/cse/phd/csz138105/Datasets/'
 save_path = "saved_model/model.pkl"
 
 def main():
   if(dataset=="Middlebury"):
-	train_set = MiddleburyDataset(DATA_DIR)
+    train_set = MiddleburyDataset(DATA_DIR)
   else:
-	train_set = KittyDataset(DATA_DIR)
+    train_set = KittyDataset(DATA_DIR)
   train_loader = DataLoader(train_set, batch_size=batch_size, num_workers=num_workers, shuffle=True)
 model_save_path = os.path.join("experiments", args.model_file)
 log_file = open(os.path.join("experiments", args.log_file), "w")
@@ -58,11 +59,11 @@ log_file = open(os.path.join("experiments", args.log_file), "w")
 
 def main():
   if(dataset=="Middlebury"):
-	train_set = MiddleburyDataset(DATA_DIR,'split_train')
-	val_set = MiddleburyDataset(DATA_DIR,'split_val')
+    train_set = MiddleburyDataset(DATA_DIR,'split_train')
+    val_set = MiddleburyDataset(DATA_DIR,'split_val')
   else:
-	train_set = KittyDataset(DATA_DIR,'split_train')
-	val_set = KittyDataset(DATA_DIR,'split_train')
+    train_set = KittyDataset(DATA_DIR,'split_train')
+    val_set = KittyDataset(DATA_DIR,'split_train')
   train_loader = DataLoader(train_set, batch_size=batch_size, num_workers=num_workers, shuffle=True)
 
   
@@ -71,75 +72,75 @@ def main():
   optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
 
   if torch.cuda.is_available():
-	model = model.cuda()
+    model = model.cuda()
 
   for epoch in range(num_epoch):
-	print("epoch", epoch)
-	torch.save(model, model_save_path)
-	for i, data in enumerate(train_loader):
-	  left_img, right_img, labels = data
-	  # No clamping might be dangerous
-	  labels=labels.clamp_(-1,k)
+    print("epoch", epoch)
+    torch.save(model, model_save_path)
+    for i, data in enumerate(train_loader):
+      left_img, right_img, labels = data
+      # No clamping might be dangerous
+      labels=labels.clamp_(-1,k)
 
-	  optimizer.zero_grad()
-	  if torch.cuda.is_available():
-		left_img = left_img.cuda()
-		right_img = right_img.cuda()
-		labels=labels.cuda()
-	 
-	  left_img = Variable(left_img,requires_grad=True)
-	  right_img = Variable(right_img,requires_grad=True)
-	  labels = Variable(labels.type('torch.cuda.LongTensor'))
-	  left,right= model(left_img,right_img)
-	  #print(max(model.parameters),min(model.parameters))
-	  b,d,r,c = left.size()
-	  corr=Variable(torch.zeros(b,k,r,c).cuda())
+      optimizer.zero_grad()
+      if torch.cuda.is_available():
+        left_img = left_img.cuda()
+        right_img = right_img.cuda()
+        labels=labels.cuda()
+     
+      left_img = Variable(left_img,requires_grad=True)
+      right_img = Variable(right_img,requires_grad=True)
+      labels = Variable(labels.type('torch.cuda.LongTensor'))
+      left,right= model(left_img,right_img)
+      #print(max(model.parameters),min(model.parameters))
+      b,d,r,c = left.size()
+      corr=Variable(torch.zeros(b,k,r,c).cuda())
 
-	 
-	  #print("Left",left.size())
-	  
-	  for i in range(k):
-		corr[:,i,:,k:c] = (left[:,:,:,k:c]*right[:,:,:,k-i:c-i]).sum(1)
-	 #  for i in range(k):
-		# corr[:,i,:,0:c-k] = (left[:,:,:,0:c-k]*right[:,:,:,i:c-k+i]).sum(1)
-	  
+     
+      #print("Left",left.size())
+      
+      for i in range(k):
+        corr[:,i,:,k:c] = (left[:,:,:,k:c]*right[:,:,:,k-i:c-i]).sum(1)
+     #  for i in range(k):
+        # corr[:,i,:,0:c-k] = (left[:,:,:,0:c-k]*right[:,:,:,i:c-k+i]).sum(1)
+      
 
-	  # for i in range(k):	
-	  # 	for j in range(k-i):	 
-	  # 		corr[:,j,:,c-k+i]=(left[:,:,:,c-k+i]*right[:,:,:,c-k+i+j]).sum(1)
+      # for i in range(k):  
+      #     for j in range(k-i):     
+      #         corr[:,j,:,c-k+i]=(left[:,:,:,c-k+i]*right[:,:,:,c-k+i+j]).sum(1)
 
-	  # for i in range(c-k):
-	  # 	for j in range(k):
-	  # 		if(i+j<c):
-	  # 			corr1[:,j,:,i]=(left[:,:,:,i]*right[:,:,:,i+j]).sum(1)
-	  # print("Norm_Diff",corr-corr1)		
-				
-	  #print(corr.size())
-	  # pad = Variable(torch.cuda.FloatTensor(b,d,r,k).zero_())
-	  # right = torch.cat([right, pad], dim=3)
-	  # corr_vec = [(left*right.narrow(3,i,c)).sum(1) for i in range(k)]
-	  # print("Corr_Vect",len(corr_vec[0].size()))
-	  # y_pred = torch.stack(corr_vec, dim=1)
-	  #y_pred = model(left_img, right_img)
-	  y_pred_perm = corr.permute(0,2,3,1)
-	  #y_pred_perm.register_hook(print)
-	  y_pred_ctgs = y_pred_perm.contiguous()
-	  y_pred_flat= y_pred_ctgs.view(-1,k)
-	  #y_pred_.register_hook(print)
-	  y_vals, y_labels = torch.max(y_pred_ctgs, dim=3)
-	 
-	  loss = loss_fn(y_pred_flat, labels.view(-1))
-	 
-	  
-	  loss.backward()
-	 
-	  optimizer.step()
-	  
-	  error = compute_error(epoch, i, log_file, loss.data[0], y_labels.data.cpu().numpy(), labels.data.cpu().numpy())
-	  # error = 0
-	 if(verbose):
-		print("loss, error", i, loss.data[0], error)
-	
+      # for i in range(c-k):
+      #     for j in range(k):
+      #         if(i+j<c):
+      #             corr1[:,j,:,i]=(left[:,:,:,i]*right[:,:,:,i+j]).sum(1)
+      # print("Norm_Diff",corr-corr1)       
+                
+      #print(corr.size())
+      # pad = Variable(torch.cuda.FloatTensor(b,d,r,k).zero_())
+      # right = torch.cat([right, pad], dim=3)
+      # corr_vec = [(left*right.narrow(3,i,c)).sum(1) for i in range(k)]
+      # print("Corr_Vect",len(corr_vec[0].size()))
+      # y_pred = torch.stack(corr_vec, dim=1)
+      #y_pred = model(left_img, right_img)
+      y_pred_perm = corr.permute(0,2,3,1)
+      #y_pred_perm.register_hook(print)
+      y_pred_ctgs = y_pred_perm.contiguous()
+      y_pred_flat= y_pred_ctgs.view(-1,k)
+      #y_pred_.register_hook(print)
+      y_vals, y_labels = torch.max(y_pred_ctgs, dim=3)
+     
+      loss = loss_fn(y_pred_flat, labels.view(-1))
+     
+      
+      loss.backward()
+     
+      optimizer.step()
+      
+      error = compute_error(epoch, i, log_file, loss.data[0], y_labels.data.cpu().numpy(), labels.data.cpu().numpy())
+      # error = 0
+      if(verbose):
+        print("loss, error", i, loss.data[0], error)
+    
 
 if __name__ == "__main__":
   main()
