@@ -19,7 +19,7 @@ class Unary(nn.Module):
     return pad(x)
 
   def forward(self, x):
-    x = F.relu(self.conv1(x))
+    x = F.tanh(self.conv1(x))
     for layer in self.layers:
-      x = F.relu(layer(self.padding(x)))
+      x = F.tanh(layer(self.padding(x)))
     return x

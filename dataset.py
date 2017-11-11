@@ -16,7 +16,7 @@ class KittyDataset(Dataset):
         self.files[split] = os.listdir(self.root + '/' + split+'/myimage_2')
 
   def __len__(self):
-    return 1
+    # return 1
     return len(self.files[self.split])
 
   def __getitem__(self, i):

@@ -17,6 +17,7 @@ class StereoCNN(nn.Module):
     super(StereoCNN, self).__init__()
     self.k = k
     self.unary = Unary(i)
+    self.random_conv = nn.Conv2d(k, k, 1)
 
   def forward(self, l, r):
     # phi_left = self.unary_left(l)
@@ -26,12 +27,13 @@ class StereoCNN(nn.Module):
  
     print("phi", phi_left.min().data[0], phi_left.max().data[0], phi_right.min().data[0], phi_right.max().data[0])
     corr = Correlation(self.k)(phi_left, phi_right)
-    corr2 = correlation(phi_left, phi_right, self.k)
+    # corr2 = correlation(phi_left, phi_right, self.k)
     
-    corr.register_hook(lambda x : print("corr grads", x.min().data[0], x.max().data[0]))
-    corr2.register_hook(lambda x : print("corr grads", x.min().data[0], x.max().data[0]))
-    diff_data = corr.data - corr2.data
-    print("DIFFERENCE", diff_data.min(), diff_data.max())
+    # corr.register_hook(lambda x : print("corr grads", x.min().data[0], x.max().data[0]))
+    # corr2.register_hook(lambda x : print("corr grads", x.min().data[0], x.max().data[0]))
+    # diff_data = corr.data - corr2.data
+    # print("DIFFERENCE", diff_data.min(), diff_data.max())
     # print "DIFFERENCE", diff_grad.min(), diff_grad.max()
     # print "corr", corr.min().data[0], corr.max().data[0]
+    corr = self.random_conv(corr)
     return corr
