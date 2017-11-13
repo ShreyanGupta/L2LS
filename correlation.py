@@ -68,7 +68,7 @@ if __name__ == "__main__":
   ans2 = ans2.sum()
   ans.backward()
   ans2.backward()
-  print ans
-  print "left grads", left.grad.data.equal(left2.grad.data)
-  print "right grads", right.grad.data.equal(right2.grad.data)
+  #print ans
+  #print "left grads", left.grad.data.equal(left2.grad.data)
+  #print "right grads", right.grad.data.equal(right2.grad.data)
   # print(output)

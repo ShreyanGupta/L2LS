@@ -38,11 +38,11 @@ num_epoch = args.num_epoch
 num_workers = 4
 
 # DATA_DIR = '/Users/ankitanand/Desktop/Stereo_CRF_CNN/Datasets/'
-DATA_DIR = '/Users/Shreyan/Downloads/Datasets/'
-# DATA_DIR = '/home/ankit/Stereo_CNN_CRF/Datasets/'
+DATA_DIR = '/scratch/cse/phd/csz138105/Datasets/'
+# DATA_DIR = '/home/ankit/Stereo_CNN_C/scratch/cse/phd/csz138105/Datasets/iRF/Datasets/'
 
-model_save_path = os.path.join("experiments", args.model_file)
-log_file = open(os.path.join("experiments", args.log_file), "w")
+model_save_path = os.path.join("/scratch/cse/phd/csz138105/experiments", args.model_file)
+log_file = open(os.path.join("/scratch/cse/phd/csz138105/experiments", args.log_file), "w")
 
 def main():
   # Get dataset
@@ -73,7 +73,7 @@ def main():
     for i, data in enumerate(train_loader):
       left_img, right_img, labels = data
       # No clamping might be dangerous
-      labels.clamp_(-1,k-1)
+      #labels.clamp_(-1,k-1)
 
       if torch.cuda.is_available():
         left_img = left_img.cuda()
@@ -82,16 +82,16 @@ def main():
       
       left_img = Variable(left_img)
       right_img = Variable(right_img)
-      labels = Variable(labels)
-
-      print "forward"
+      #labels = Variable(labels)
+      labels = Variable(labels.type('torch.cuda.LongTensor'))	
+      #print"forward"
       y_pred = model(left_img, right_img)
       y_pred = y_pred.permute(0,2,3,1)
       y_pred = y_pred.contiguous()
       
       _, y_labels = torch.max(y_pred, dim=3)
 
-      print "backward"
+      #print "backward"
       loss = loss_fn(y_pred.view(-1,k), labels.view(-1))
       optimizer.zero_grad()
       loss.backward()

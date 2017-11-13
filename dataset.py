@@ -7,12 +7,12 @@ from load_pfm import load_pfm
 
 class KittyDataset(Dataset):
   """Kitty dataset"""
-  def __init__(self, root, split='training', transform=None):
+  def __init__(self, root, split='split_train', transform=None):
     self.root = root+"/Kitty/data_scene_flow"
     self.split = split
     self._transform = transform
     self.files = collections.defaultdict(list)
-    for split in ['training', 'testing']:
+    for split in ['split_train', 'testing']:
         self.files[split] = os.listdir(self.root + '/' + split+'/myimage_2')
 
   def __len__(self):
@@ -57,15 +57,15 @@ class KittyDataset(Dataset):
 
 class MiddleburyDataset(Dataset):
   """Middlebury dataset"""
-  def __init__(self, root, split='training', Resolution='Q',transform=None):
+  def __init__(self, root, split='split_train', Resolution='Q',transform=None):
     self.root = root + "Middlebury/Eval3/"
     self.split = split
     self._transform = transform
     self.files = collections.defaultdict(list)
     self.Resolution=Resolution
-    for split in ['training', 'test']:
+    for split in ['split_train', 'test']:
         print(self.root + split + Resolution)
-        os.system("rm "+self.root + split + Resolution+"/.DS_Store ")
+        #os.system("rm "+self.root + split + Resolution+"/.DS_Store ")
         self.files[split] = os.listdir(self.root + split + Resolution )
 
   def __len__(self):
